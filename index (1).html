@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ember &amp; Oak Coffee Roasters</title>
+  <meta name="description" content="Small-batch coffee roasted in London. Beans, subscriptions and cafés.">
+  <style>
+    :root {
+      --cream: #f7f1e8; --paper: #fffaf3; --ink: #2b1d14; --muted: #7a6656;
+      --ember: #c4521c; --ember-dark: #9e3f12; --oak: #5b3a24; --line: #e6dccd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: Georgia, "Times New Roman", serif; background: var(--cream); color: var(--ink); line-height: 1.6; }
+    a { color: inherit; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .sans { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    h1, h2, h3 { line-height: 1.2; font-weight: 700; }
+    h2 { font-size: 2rem; margin-bottom: 8px; }
+    .lead { color: var(--muted); margin-bottom: 32px; }
+    section { padding: 80px 0; }
+
+    /* Nav */
+    .site-nav { position: sticky; top: 0; z-index: 20; background: var(--paper); border-bottom: 1px solid var(--line); }
+    .site-nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { font-size: 1.3rem; font-weight: 700; text-decoration: none; }
+    .brand span { color: var(--ember); }
+    .menu { display: flex; gap: 24px; list-style: none; }
+    .menu a { text-decoration: none; font-size: .95rem; color: var(--muted); }
+    .menu a:hover { color: var(--ink); }
+    .basket { position: relative; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-size: .9rem; color: var(--ink); }
+    .basket .count { display: inline-block; min-width: 22px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: var(--ember); color: #fff; font-size: .8rem; text-align: center; }
+
+    /* Buttons */
+    .btn { display: inline-block; padding: 13px 24px; border-radius: 6px; border: 2px solid var(--ember); font-weight: 600; font-size: .95rem; text-decoration: none; cursor: pointer; transition: .15s; }
+    .btn-solid { background: var(--ember); color: #fff; }
+    .btn-solid:hover { background: var(--ember-dark); border-color: var(--ember-dark); }
+    .btn-line { background: transparent; color: var(--ember); }
+    .btn-line:hover { background: var(--ember); color: #fff; }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, var(--oak), #2b1d14); color: var(--paper); padding: 120px 0 110px; }
+    .hero h1 { font-size: clamp(2.4rem, 5.5vw, 3.8rem); max-width: 700px; }
+    .hero p { color: #e8d9c6; max-width: 540px; margin: 20px 0 36px; font-size: 1.15rem; }
+    .hero .actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .hero .btn-line { color: var(--paper); border-color: var(--paper); }
+    .hero .btn-line:hover { background: var(--paper); color: var(--ink); }
+
+    /* Carousel */
+    .carousel { position: relative; overflow: hidden; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); }
+    .slides { display: flex; transition: transform .5s ease; }
+    .slide { min-width: 100%; display: grid; grid-template-columns: 1fr 1fr; min-height: 320px; }
+    .slide .art { display: flex; align-items: center; justify-content: center; font-size: 6rem; }
+    .slide .copy { padding: 48px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+    .slide .tag { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ember); }
+    .slide .copy p { color: var(--muted); }
+    .carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(43,29,20,.75); color: #fff; font-size: 1.2rem; cursor: pointer; }
+    .carousel-arrow.prev { left: 14px; } .carousel-arrow.next { right: 14px; }
+    .dots { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    .dots button { width: 10px; height: 10px; border-radius: 50%; border: none; background: var(--line); cursor: pointer; }
+    .dots button.active { background: var(--ember); }
+
+    /* Products */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
+    .product { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .product .thumb { height: 150px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; }
+    .product .body { padding: 20px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .product .notes { color: var(--muted); font-size: .92rem; flex: 1; }
+    .product .row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+    .price { font-weight: 700; font-size: 1.1rem; }
+    .add-to-basket { padding: 9px 16px; font-size: .88rem; }
+    .add-to-basket.added { background: var(--oak); border-color: var(--oak); }
+
+    /* Subscriptions */
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
+    .plan { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 32px; display: flex; flex-direction: column; gap: 12px; }
+    .plan.featured { border: 2px solid var(--ember); }
+    .plan .amount { font-size: 2.2rem; font-weight: 700; }
+    .plan .amount small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+    .plan ul { list-style: none; color: var(--muted); font-size: .95rem; flex: 1; }
+    .plan li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+    .badge { align-self: flex-start; background: var(--ember); color: #fff; font-size: .75rem; padding: 3px 10px; border-radius: 999px; }
+
+    /* Brew guide */
+    .guide { background: var(--oak); color: var(--paper); border-radius: 14px; padding: 48px; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .guide p { color: #e8d9c6; }
+    .guide .btn-line { color: var(--paper); border-color: var(--paper); }
+
+    /* Cafés */
+    .cafes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
+    .cafe { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 28px; }
+    .cafe p { color: var(--muted); font-size: .95rem; margin: 6px 0 16px; }
+    .cafe .links { display: flex; gap: 18px; font-size: .92rem; }
+    .cafe .links a { color: var(--ember); font-weight: 600; }
+
+    /* FAQ */
+    .faq details { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; }
+    .faq summary { padding: 18px 22px; cursor: pointer; font-weight: 700; list-style: none; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; float: right; color: var(--ember); }
+    .faq details[open] summary::after { content: "–"; }
+    .faq details p { padding: 0 22px 18px; color: var(--muted); }
+
+    /* Newsletter */
+    .newsletter { background: var(--paper); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
+    .newsletter form { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .newsletter input, .newsletter select { padding: 13px 14px; border: 1px solid var(--line); border-radius: 6px; font: inherit; min-width: 220px; background: #fff; }
+    .newsletter .done { display: none; color: var(--oak); font-weight: 700; margin-top: 16px; }
+
+    /* Footer */
+    footer { padding: 48px 0; font-size: .92rem; color: var(--muted); }
+    footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    footer .social { display: flex; gap: 18px; }
+    footer a { color: var(--ink); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 8px; transition: .3s; z-index: 50; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 720px) {
+      .menu { display: none; }
+      .slide { grid-template-columns: 1fr; }
+      .slide .art { min-height: 160px; }
+    }
+  </style>
+</head>
+<body class="sans">
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a href="#" class="brand">Ember <span>&amp;</span> Oak</a>
+      <ul class="menu">
+        <li><a href="#shop">Shop</a></li>
+        <li><a href="#subscribe">Subscriptions</a></li>
+        <li><a href="#cafes">Cafés</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <button class="basket" id="basket-btn">Basket <span class="count" id="basket-count">0</span></button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <h1>Small-batch coffee, roasted in London every Tuesday.</h1>
+      <p>Single-origin beans and house blends, delivered fresh or poured at one of our three cafés.</p>
+      <div class="actions">
+        <a href="#shop" class="btn btn-solid">Shop beans</a>
+        <a href="#cafes" class="btn btn-line">Find a café</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="featured">
+    <div class="wrap">
+      <h2>This month's picks</h2>
+      <p class="lead">Fresh off the roaster.</p>
+      <div class="carousel">
+        <div class="slides">
+          <div class="slide">
+            <div class="art" style="background:#f0d9c2">☕</div>
+            <div class="copy">
+              <span class="tag">New arrival</span>
+              <h3>Ethiopia Guji</h3>
+              <p>Jasmine, peach and bergamot. Our brightest filter roast this season.</p>
+              <a href="#shop" class="btn btn-solid">Shop now</a>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="art" style="background:#e2cdb5">🎁</div>
+            <div class="copy">
+              <span class="tag">Gift idea</span>
+              <h3>The Taster Box</h3>
+              <p>Three 100g bags of our favourite roasts. Perfect for the coffee nerd in your life.</p>
+              <a href="#shop" class="btn btn-solid">See the box</a>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="art" style="background:#d8c0a6">📦</div>
+            <div class="copy">
+              <span class="tag">Subscriptions</span>
+              <h3>First bag free</h3>
+              <p>Start any subscription this month and your first delivery is on us.</p>
+              <a href="#subscribe" class="btn btn-solid">Start subscribing</a>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-arrow prev" aria-label="Previous slide">‹</button>
+        <button class="carousel-arrow next" aria-label="Next slide">›</button>
+      </div>
+      <div class="dots"></div>
+    </div>
+  </section>
+
+  <section id="shop" style="padding-top:20px">
+    <div class="wrap">
+      <h2>Shop beans</h2>
+      <p class="lead">All bags 250g, whole bean or ground to order.</p>
+      <div class="grid">
+        <div class="product" data-sku="EO-001">
+          <div class="thumb" style="background:#f0d9c2">🌸</div>
+          <div class="body">
+            <h3>Ethiopia Guji</h3>
+            <p class="notes">Jasmine · peach · bergamot</p>
+            <div class="row"><span class="price">£12.50</span><button class="btn btn-solid add-to-basket">Add to basket</button></div>
+          </div>
+        </div>
+        <div class="product" data-sku="EO-002">
+          <div class="thumb" style="background:#e2cdb5">🍫</div>
+          <div class="body">
+            <h3>Colombia Huila</h3>
+            <p class="notes">Milk chocolate · red apple · caramel</p>
+            <div class="row"><span class="price">£11.00</span><button class="btn btn-solid add-to-basket">Add to basket</button></div>
+          </div>
+        </div>
+        <div class="product" data-sku="EO-003">
+          <div class="thumb" style="background:#d8c0a6">🔥</div>
+          <div class="body">
+            <h3>Ember House Espresso</h3>
+            <p class="notes">Dark cocoa · hazelnut · molasses</p>
+            <div class="row"><span class="price">£10.00</span><button class="btn btn-solid add-to-basket">Add to basket</button></div>
+          </div>
+        </div>
+        <div class="product" data-sku="EO-004">
+          <div class="thumb" style="background:#cdb294">🌙</div>
+          <div class="body">
+            <h3>Swiss Water Decaf</h3>
+            <p class="notes">Brown sugar · almond · cream</p>
+            <div class="row"><span class="price">£11.50</span><button class="btn btn-solid add-to-basket">Add to basket</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="subscribe" style="background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="wrap">
+      <h2>Subscriptions</h2>
+      <p class="lead">Fresh coffee on repeat. Pause or cancel any time.</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>Fortnightly</h3>
+          <div class="amount">£10.50<small> / bag</small></div>
+          <ul><li>One 250g bag every 2 weeks</li><li>Free UK delivery</li><li>Choose your roast</li></ul>
+          <button class="btn btn-line choose-plan">Choose Fortnightly</button>
+        </div>
+        <div class="plan featured">
+          <span class="badge">Most popular</span>
+          <h3>Weekly</h3>
+          <div class="amount">£9.50<small> / bag</small></div>
+          <ul><li>One 250g bag every week</li><li>Free UK delivery</li><li>Roaster's choice or pick your own</li></ul>
+          <button class="btn btn-solid choose-plan">Choose Weekly</button>
+        </div>
+        <div class="plan">
+          <h3>Office</h3>
+          <div class="amount">£40<small> / week</small></div>
+          <ul><li>1kg of espresso every week</li><li>Free grinder loan</li><li>Invoice billing</li></ul>
+          <button class="btn btn-line choose-plan">Choose Office</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="brew">
+    <div class="wrap">
+      <div class="guide">
+        <div>
+          <h2>Not sure how to brew it?</h2>
+          <p>Our free 12-page guide covers V60, AeroPress, cafetière and espresso.</p>
+        </div>
+        <a href="brew-guide.pdf" class="btn btn-line">Download the brew guide (PDF)</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="cafes" style="padding-top:20px">
+    <div class="wrap">
+      <h2>Our cafés</h2>
+      <p class="lead">Open 7am–5pm, seven days a week.</p>
+      <div class="cafes">
+        <div class="cafe">
+          <h3>Shoreditch</h3>
+          <p>Unit 4, Example Yard, London</p>
+          <div class="links">
+            <a href="https://www.google.com/maps/search/?api=1&query=Shoreditch+London" target="_blank" rel="noopener">Get directions</a>
+            <a href="tel:+442000000001">Call</a>
+          </div>
+        </div>
+        <div class="cafe">
+          <h3>Borough</h3>
+          <p>12 Sample Street, London</p>
+          <div class="links">
+            <a href="https://www.google.com/maps/search/?api=1&query=Borough+London" target="_blank" rel="noopener">Get directions</a>
+            <a href="tel:+442000000002">Call</a>
+          </div>
+        </div>
+        <div class="cafe">
+          <h3>Peckham</h3>
+          <p>Arch 9, Placeholder Lane, London</p>
+          <div class="links">
+            <a href="https://www.google.com/maps/search/?api=1&query=Peckham+London" target="_blank" rel="noopener">Get directions</a>
+            <a href="tel:+442000000003">Call</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="faq" style="padding-top:20px">
+    <div class="wrap">
+      <h2>FAQ</h2>
+      <p class="lead">The questions we get asked most.</p>
+      <details><summary>When will my order arrive?</summary><p>We roast on Tuesdays and ship the same day. Most UK orders arrive Wednesday or Thursday.</p></details>
+      <details><summary>Whole bean or ground?</summary><p>Whole bean stays fresh longer, but we're happy to grind for your brew method. Just pick it at checkout.</p></details>
+      <details><summary>Can I pause my subscription?</summary><p>Yes, pause, skip or cancel any time from your account. No fees.</p></details>
+      <details><summary>Is your packaging recyclable?</summary><p>Our bags are kerbside recyclable and our boxes are 100% recycled cardboard.</p></details>
+    </div>
+  </section>
+
+  <section class="newsletter">
+    <div class="wrap">
+      <h2>Get 10% off your first order</h2>
+      <p class="lead" style="margin-bottom:0">Roast notes, new arrivals and the odd discount. No spam.</p>
+      <form id="newsletter-form">
+        <input type="email" name="email" placeholder="you@example.com" required>
+        <select name="brew_method">
+          <option value="">How do you brew?</option>
+          <option value="espresso">Espresso</option>
+          <option value="filter">Filter / pour-over</option>
+          <option value="cafetiere">Cafetière</option>
+          <option value="aeropress">AeroPress</option>
+        </select>
+        <button type="submit" class="btn btn-solid">Sign me up</button>
+      </form>
+      <p class="done" id="newsletter-done">You're in. Check your inbox for your code.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>
+        <strong>Ember &amp; Oak Coffee Roasters</strong><br>
+        <a href="mailto:hello@example.com">hello@example.com</a>
+      </div>
+      <div class="social">
+        <a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.youtube.com/" target="_blank" rel="noopener">YouTube</a>
+      </div>
+      <div>© 2026 Ember &amp; Oak. A practice site — not a real business.</div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Carousel
+    (function () {
+      var slides = document.querySelector('.slides');
+      var count = slides.children.length;
+      var dotsWrap = document.querySelector('.dots');
+      var current = 0, timer;
+      for (var i = 0; i < count; i++) {
+        var d = document.createElement('button');
+        d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        (function (n) { d.addEventListener('click', function () { go(n); restart(); }); })(i);
+        dotsWrap.appendChild(d);
+      }
+      function go(n) {
+        current = (n + count) % count;
+        slides.style.transform = 'translateX(-' + (current * 100) + '%)';
+        Array.prototype.forEach.call(dotsWrap.children, function (el, idx) { el.classList.toggle('active', idx === current); });
+      }
+      function restart() { clearInterval(timer); timer = setInterval(function () { go(current + 1); }, 6000); }
+      document.querySelector('.carousel-arrow.prev').addEventListener('click', function () { go(current - 1); restart(); });
+      document.querySelector('.carousel-arrow.next').addEventListener('click', function () { go(current + 1); restart(); });
+      go(0); restart();
+    })();
+
+    // Basket
+    var basket = 0;
+    function toast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 2200);
+    }
+    document.querySelectorAll('.add-to-basket').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        basket++;
+        document.getElementById('basket-count').textContent = basket;
+        var name = btn.closest('.product').querySelector('h3').textContent;
+        btn.textContent = 'Added ✓'; btn.classList.add('added');
+        setTimeout(function () { btn.textContent = 'Add to basket'; btn.classList.remove('added'); }, 1500);
+        toast(name + ' added to your basket');
+      });
+    });
+    document.getElementById('basket-btn').addEventListener('click', function () {
+      toast(basket ? 'You have ' + basket + ' item(s). Checkout coming soon!' : 'Your basket is empty');
+    });
+
+    // Subscriptions
+    document.querySelectorAll('.choose-plan').forEach(function (btn) {
+      btn.addEventListener('click', function () { toast(btn.textContent.replace('Choose ', '') + ' plan selected'); });
+    });
+
+    // Newsletter
+    document.getElementById('newsletter-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      this.style.display = 'none';
+      document.getElementById('newsletter-done').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
